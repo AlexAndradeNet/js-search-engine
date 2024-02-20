@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Multisearch</title>
+  </head>
+  <body>
+    <script language="javascript">
+      let searchEngine = {
+        go: "https://www.google.com/search?q=",
+        we: "https://en.wikipedia.org/wiki/",
+        ws: "https://es.wikipedia.org/wiki/",
+        mw: "https://www.merriam-webster.com/dictionary/",
+      };
+
+      function getQueryParam(search, paramName) {
+        var pairs = search.split("&");
+
+        for (var i = 0; i < pairs.length; i++) {
+          var pair = pairs[i].split("=");
+          var key = decodeURIComponent(pair[0]);
+          var value = pair[1];
+
+          if (key === paramName) {
+            return value;
+          }
+        }
+
+        return null; // return null if parameter is not found
+      }
+
+      function getSearchEngine(allParams) {
+        let query = getQueryParam(allParams, "q");
+        let parts = query.split("%20");
+        let website = parts[0];
+        let search = "";
+
+        if (searchEngine[website]) {
+          website = searchEngine[website];
+
+          parts.shift(); // This removes the first element from the array
+
+          search = parts.join("%20").trim(); // This joins the remaining array elements
+        } else {
+          website = searchEngine["go"];
+          search = query;
+        }
+
+        return website + search;
+      }
+
+      function testAssertTrue(testTitle, result, expected) {
+        let message = "";
+        if (expected === result) {
+          console.log(`${testTitle}: ✅ Passed`);
+        } else {
+          console.error(
+            `${testTitle}: ❌ Failed. Expected ${expected}, but got ${result}`
+          );
+        }
+      }
+
+      function runTests() {
+        let result = getSearchEngine("q=Colombia");
+        testAssertTrue(
+          "Testing default to Google",
+          result,
+          "https://www.google.com/search?q=Colombia"
+        );
+
+        result = getSearchEngine("q=DE%20Colombia");
+        testAssertTrue(
+          "Testing default multi word",
+          result,
+          "https://www.google.com/search?q=DE%20Colombia"
+        );
+
+        result = getSearchEngine("q=go%20Colombia");
+        testAssertTrue(
+          "Testing search on Google",
+          result,
+          "https://www.google.com/search?q=Colombia"
+        );
+
+        result = getSearchEngine("q=mw%20Colombia");
+        testAssertTrue(
+          "Testing search on Merriam Webster Dictionary",
+          result,
+          "https://www.merriam-webster.com/dictionary/Colombia"
+        );
+
+        result = getSearchEngine("q=mw%20Colombia%20America");
+        testAssertTrue(
+          "Testing search multi word",
+          result,
+          "https://www.merriam-webster.com/dictionary/Colombia%20America"
+        );
+
+        result = getSearchEngine("q=xx%20Colombia");
+        testAssertTrue(
+          "Testing a bad search engine default to Google",
+          result,
+          "https://www.google.com/search?q=xx%20Colombia"
+        );
+      }
+
+      function runProduction() {
+        let allParams = location.search.substring(1); // remove the leading '?'
+        window.location.href = getSearchEngine(allParams);
+      }
+
+      runProduction();
+      //runTests();
+
+      // file:///Users/alex.andrade/Desktop/search_engine.html?q=mw%20Colombia%20America
+    </script>
+  </body>
+</html>
